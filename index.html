@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .task-list { list-style: none; padding: 0; }
+        .task { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <h1>To-Do List</h1>
+
+    <input type="text" id="taskInput" placeholder="Enter a new task">
+    <button onclick="addTask()">Add Task</button>
+
+    <h2>Tasks</h2>
+    <ul id="taskList" class="task-list"></ul>
+
+    <script>
+        async function fetchTasks() {
+            const response = await fetch('http://localhost:5000/api/todo');
+            const tasks = await response.json();
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = '';
+            tasks.forEach(task => {
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task';
+                taskItem.innerHTML = `<span>${task.name}</span>
+                    <button onclick="deleteTask(${task.id})">Delete</button>`;
+                taskList.appendChild(taskItem);
+            });
+        }
+
+        async function addTask() {
+            const taskInput = document.getElementById('taskInput').value;
+            if (taskInput.trim() === '') {
+                alert('Task cannot be empty');
+                return;
+            }
+
+            const response = await fetch('http://localhost:5000/api/todo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: taskInput, isComplete: false })
+            });
+            document.getElementById('taskInput').value = '';
+            fetchTasks();
+        }
+
+        async function deleteTask(id) {
+            await fetch(`http://localhost:5000/api/todo/${id}`, { method: 'DELETE' });
+            fetchTasks();
+        }
+
+        window.onload = fetchTasks;
+    </script>
+</body>
+</html>
