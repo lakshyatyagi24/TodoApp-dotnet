@@ -124,3 +124,4 @@ C:\Projects\TodoApp-dotnet\obj\Debug\net8.0\staticwebassets\msbuild.buildTransit
 C:\Projects\TodoApp-dotnet\obj\Debug\net8.0\staticwebassets.pack.json
 C:\Projects\TodoApp-dotnet\obj\Debug\net8.0\scopedcss\bundle\TodoApp-dotnet.styles.css
 C:\Projects\TodoApp-dotnet\obj\Debug\net8.0\TodoApp-.6632E98E.Up2Date
+C:\Projects\TodoApp-dotnet\obj\Debug\net8.0\TodoApp-dotnet.sourcelink.json
