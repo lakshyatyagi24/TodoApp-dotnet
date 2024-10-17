@@ -8,6 +8,7 @@
         body { font-family: Arial, sans-serif; }
         .task-list { list-style: none; padding: 0; }
         .task { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #ddd; }
+        .task button { margin-left: 10px; }
     </style>
 </head>
 <body>
@@ -16,21 +17,46 @@
     <input type="text" id="taskInput" placeholder="Enter a new task">
     <button onclick="addTask()">Add Task</button>
 
-    <h2>Tasks</h2>
-    <ul id="taskList" class="task-list"></ul>
+    <h2>Not Completed Tasks</h2>
+    <ul id="notCompletedTasks" class="task-list"></ul>
+
+    <h2>Completed Tasks</h2>
+    <ul id="completedTasks" class="task-list"></ul>
+
+    <!-- Hidden input to edit a task -->
+    <div id="editSection" style="display:none;">
+        <h2>Edit Task</h2>
+        <input type="text" id="editTaskInput">
+        <button onclick="updateTask()">Update Task</button>
+    </div>
 
     <script>
+        let editTaskId = null;
+
         async function fetchTasks() {
             const response = await fetch('http://localhost:5000/api/todo');
             const tasks = await response.json();
-            const taskList = document.getElementById('taskList');
-            taskList.innerHTML = '';
+
+            const notCompletedTasks = document.getElementById('notCompletedTasks');
+            const completedTasks = document.getElementById('completedTasks');
+
+            // Clear both task lists
+            notCompletedTasks.innerHTML = '';
+            completedTasks.innerHTML = '';
+
             tasks.forEach(task => {
                 const taskItem = document.createElement('li');
                 taskItem.className = 'task';
                 taskItem.innerHTML = `<span>${task.name}</span>
+                    <button onclick="toggleCompletion(${task.id}, ${task.isComplete}, '${task.name}')">${task.isComplete ? 'Mark as Not Complete' : 'Mark as Complete'}</button>
+                    <button onclick="editTask(${task.id}, '${task.name}')">Edit</button>
                     <button onclick="deleteTask(${task.id})">Delete</button>`;
-                taskList.appendChild(taskItem);
+
+                if (task.isComplete) {
+                    completedTasks.appendChild(taskItem);
+                } else {
+                    notCompletedTasks.appendChild(taskItem);
+                }
             });
         }
 
@@ -41,7 +67,7 @@
                 return;
             }
 
-            const response = await fetch('http://localhost:5000/api/todo', {
+            await fetch('http://localhost:5000/api/todo', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: taskInput, isComplete: false })
@@ -52,6 +78,41 @@
 
         async function deleteTask(id) {
             await fetch(`http://localhost:5000/api/todo/${id}`, { method: 'DELETE' });
+            fetchTasks();
+        }
+
+        function editTask(id, taskName) {
+            editTaskId = id;
+            document.getElementById('editTaskInput').value = taskName;
+            document.getElementById('editSection').style.display = 'block';
+        }
+
+        async function updateTask() {
+            const updatedTaskName = document.getElementById('editTaskInput').value;
+
+            if (updatedTaskName.trim() === '') {
+                alert('Task cannot be empty');
+                return;
+            }
+
+            await fetch(`http://localhost:5000/api/todo/${editTaskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: updatedTaskName, isComplete: false })
+            });
+
+            document.getElementById('editSection').style.display = 'none';
+            editTaskId = null;
+            fetchTasks();
+        }
+
+        async function toggleCompletion(id, currentStatus, taskName) {
+            await fetch(`http://localhost:5000/api/todo/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isComplete: !currentStatus, name: taskName })
+            });
+
             fetchTasks();
         }
 

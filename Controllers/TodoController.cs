@@ -43,4 +43,20 @@ public class TodoController : ControllerBase
         todoList.Remove(item);
         return NoContent();
     }
+
+    [HttpPut("{id}")]
+    public IActionResult UpdateTodoItem(long id, TodoItem updatedItem)
+    {
+        var existingItem = todoList.Find(t => t.Id == id);
+        if (existingItem == null)
+        {
+            return NotFound();
+        }
+
+        // Update the existing task with the new values
+        existingItem.Name = updatedItem.Name;
+        existingItem.IsComplete = updatedItem.IsComplete;
+
+        return NoContent(); // Success but no content to return
+    }
 }
