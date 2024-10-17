@@ -3,31 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>To-Do List</title>
+    <title>Advanced To-Do List</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .task-list { list-style: none; padding: 0; }
-        .task { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #ddd; }
-        .task button { margin-left: 10px; }
+        /* Base styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2rem;
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 8px rgba(76, 175, 80, 0.2);
+            outline: none;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .task-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .task {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease, background-color 0.3s ease;
+        }
+
+        .task:hover {
+            transform: scale(1.02);
+            background-color: #f9f9f9;
+        }
+
+        .task span {
+            flex-grow: 1;
+        }
+
+        .task.completed span {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .editSection {
+            display: none;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #333;
+            margin-top: 30px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            input[type="text"] {
+                font-size: 0.9rem;
+            }
+
+            button {
+                font-size: 0.9rem;
+                padding: 8px 12px;
+            }
+
+            .task {
+                padding: 8px;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Task Enter Animation */
+        .task {
+            animation: slideIn 0.4s ease-in-out;
+        }
+
     </style>
 </head>
 <body>
-    <h1>To-Do List</h1>
+    <div class="container">
+        <h1>Advanced To-Do List</h1>
 
-    <input type="text" id="taskInput" placeholder="Enter a new task">
-    <button onclick="addTask()">Add Task</button>
+        <input type="text" id="taskInput" placeholder="Enter a new task">
+        <button onclick="addTask()">Add Task</button>
 
-    <h2>Not Completed Tasks</h2>
-    <ul id="notCompletedTasks" class="task-list"></ul>
+        <h2 class="section-title">Not Completed Tasks</h2>
+        <ul id="notCompletedTasks" class="task-list"></ul>
 
-    <h2>Completed Tasks</h2>
-    <ul id="completedTasks" class="task-list"></ul>
+        <h2 class="section-title">Completed Tasks</h2>
+        <ul id="completedTasks" class="task-list"></ul>
 
-    <!-- Hidden input to edit a task -->
-    <div id="editSection" style="display:none;">
-        <h2>Edit Task</h2>
-        <input type="text" id="editTaskInput">
-        <button onclick="updateTask()">Update Task</button>
+        <!-- Hidden input to edit a task -->
+        <div id="editSection" class="editSection">
+            <h2>Edit Task</h2>
+            <input type="text" id="editTaskInput">
+            <button onclick="updateTask()">Update Task</button>
+        </div>
     </div>
 
     <script>
@@ -47,8 +201,11 @@
             tasks.forEach(task => {
                 const taskItem = document.createElement('li');
                 taskItem.className = 'task';
+                if (task.isComplete) {
+                    taskItem.classList.add('completed');
+                }
                 taskItem.innerHTML = `<span>${task.name}</span>
-                    <button onclick="toggleCompletion(${task.id}, ${task.isComplete}, '${task.name}')">${task.isComplete ? 'Mark as Not Complete' : 'Mark as Complete'}</button>
+                    <button onclick="toggleCompletion(${task.id}, ${task.isComplete})">${task.isComplete ? 'Mark as Not Complete' : 'Mark as Complete'}</button>
                     <button onclick="editTask(${task.id}, '${task.name}')">Edit</button>
                     <button onclick="deleteTask(${task.id})">Delete</button>`;
 
@@ -106,14 +263,22 @@
             fetchTasks();
         }
 
-        async function toggleCompletion(id, currentStatus, taskName) {
+        async function toggleCompletion(id, currentStatus) {
+            // Fetch the current task details
+            const response = await fetch(`http://localhost:5000/api/todo/${id}`);
+            const task = await response.json();
+
+            // Update the isComplete status
+            task.isComplete = !currentStatus;
+
+            // Send the updated task (with both Name and isComplete fields) to the API
             await fetch(`http://localhost:5000/api/todo/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ isComplete: !currentStatus, name: taskName })
+                body: JSON.stringify(task)
             });
 
-            fetchTasks();
+            fetchTasks(); // Refresh the task list
         }
 
         window.onload = fetchTasks;
