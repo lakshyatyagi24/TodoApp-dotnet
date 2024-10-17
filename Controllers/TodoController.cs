@@ -1,62 +1,94 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 [Route("api/[controller]")]
 [ApiController]
 public class TodoController : ControllerBase
 {
-    private static List<TodoItem> todoList = new List<TodoItem>();
+    // Thread-safe collection to manage Todo items
+    private static ConcurrentDictionary<long, TodoItem> todoList = new ConcurrentDictionary<long, TodoItem>();
 
+    // Atomic counter for unique ID generation
+    private static long currentId = 0;
+
+    // GET: api/todo
     [HttpGet]
     public ActionResult<IEnumerable<TodoItem>> GetTodoItems()
     {
-        return todoList;
+        // Return a 200 OK with the list of Todo items
+        return Ok(todoList.Values);
     }
 
+    // GET: api/todo/{id}
     [HttpGet("{id}")]
     public ActionResult<TodoItem> GetTodoItem(long id)
     {
-        var item = todoList.Find(t => t.Id == id);
-        if (item == null)
+        // Try to find the item by its ID
+        if (todoList.TryGetValue(id, out var item))
         {
-            return NotFound();
+            return Ok(item); // Return 200 OK with the item
         }
-        return item;
+
+        return NotFound(); // Return 404 Not Found if the item doesn't exist
     }
 
+    // POST: api/todo
     [HttpPost]
     public ActionResult<TodoItem> CreateTodoItem(TodoItem item)
     {
-        item.Id = todoList.Count + 1;
-        todoList.Add(item);
+        // Simple validation to ensure the task name is not empty
+        if (string.IsNullOrEmpty(item.Name))
+        {
+            return BadRequest("Task name cannot be empty.");
+        }
+
+        // Generate a unique ID for the new Todo item
+        item.Id = System.Threading.Interlocked.Increment(ref currentId);
+
+        // Add the new item to the thread-safe collection
+        todoList[item.Id] = item;
+
+        // Return 201 Created with the location of the new resource
         return CreatedAtAction(nameof(GetTodoItem), new { id = item.Id }, item);
     }
 
+    // DELETE: api/todo/{id}
     [HttpDelete("{id}")]
     public IActionResult DeleteTodoItem(long id)
     {
-        var item = todoList.Find(t => t.Id == id);
-        if (item == null)
+        // Try to remove the item by its ID
+        if (!todoList.TryRemove(id, out _))
         {
-            return NotFound();
+            return NotFound(); // Return 404 Not Found if the item doesn't exist
         }
-        todoList.Remove(item);
-        return NoContent();
+
+        return NoContent(); // Return 204 No Content on successful delete
     }
 
+    // PUT: api/todo/{id}
     [HttpPut("{id}")]
     public IActionResult UpdateTodoItem(long id, TodoItem updatedItem)
     {
-        var existingItem = todoList.Find(t => t.Id == id);
-        if (existingItem == null)
+        // Ensure the task name is not empty
+        if (string.IsNullOrEmpty(updatedItem.Name))
         {
-            return NotFound();
+            return BadRequest("Task name cannot be empty.");
         }
 
-        // Update the existing task with the new values
+        // Check if the item exists
+        if (!todoList.ContainsKey(id))
+        {
+            return NotFound(); // Return 404 Not Found if the item doesn't exist
+        }
+
+        // Update the existing item
+        var existingItem = todoList[id];
         existingItem.Name = updatedItem.Name;
         existingItem.IsComplete = updatedItem.IsComplete;
 
-        return NoContent(); // Success but no content to return
+        // Update the collection with the modified item
+        todoList[id] = existingItem;
+
+        return NoContent(); // Return 204 No Content on successful update
     }
 }
